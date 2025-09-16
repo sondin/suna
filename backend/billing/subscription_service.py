@@ -446,9 +446,10 @@ class SubscriptionService:
         if subscription.status == 'trialing' and subscription.get('trial_end'):
             await self._handle_trial_subscription(subscription, account_id, new_tier, client)
             return
-        
-        billing_anchor = datetime.fromtimestamp(subscription['current_period_start'], tz=timezone.utc)
-        next_grant_date = datetime.fromtimestamp(subscription['current_period_end'], tz=timezone.utc)
+
+        subscription_items = subscription['items']['data'][0]
+        billing_anchor = datetime.fromtimestamp(subscription_items['current_period_start'], tz=timezone.utc)
+        next_grant_date = datetime.fromtimestamp(subscription_items['current_period_end'], tz=timezone.utc)
         
         current_account = await client.from_('credit_accounts').select(
             'tier, stripe_subscription_id, last_grant_date, billing_cycle_anchor'
@@ -590,7 +591,7 @@ class SubscriptionService:
             expires_at=expires_at
         )
         
-        next_grant_date = datetime.fromtimestamp(subscription['current_period_end'], tz=timezone.utc)
+        next_grant_date = datetime.fromtimestamp(subscription["items"]["data"][0]['current_period_end'], tz=timezone.utc)
         
         await client.from_('credit_accounts').update({
             'tier': new_tier['name'],

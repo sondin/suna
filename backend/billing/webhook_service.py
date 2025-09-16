@@ -143,9 +143,10 @@ class WebhookService:
                 old_non_expiring = 0
                 if current_balance_result.data:
                     old_non_expiring = float(current_balance_result.data[0].get('non_expiring_credits', 0))
-                
-                billing_anchor = datetime.fromtimestamp(subscription['current_period_start'], tz=timezone.utc)
-                next_grant_date = datetime.fromtimestamp(subscription['current_period_end'], tz=timezone.utc)
+
+                subscription_items = subscription['items']['data'][0]
+                billing_anchor = datetime.fromtimestamp(subscription_items['current_period_start'], tz=timezone.utc)
+                next_grant_date = datetime.fromtimestamp(subscription_items['current_period_end'], tz=timezone.utc)
                 expires_at = next_grant_date
                 
                 # Update credit account to reflect conversion
@@ -438,8 +439,8 @@ class WebhookService:
             'credits': float(new_tier_info.monthly_credits)
         }
         
-        billing_anchor = datetime.fromtimestamp(subscription['current_period_start'], tz=timezone.utc)
-        next_grant_date = datetime.fromtimestamp(subscription['current_period_end'], tz=timezone.utc)
+        billing_anchor = datetime.fromtimestamp(subscription['items']['data'][0]['current_period_start'], tz=timezone.utc)
+        next_grant_date = datetime.fromtimestamp(subscription['items']['data'][0]['current_period_end'], tz=timezone.utc)
         
         account_result = await client.from_('credit_accounts').select('tier, billing_cycle_anchor, stripe_subscription_id, trial_status, trial_started_at').eq('account_id', account_id).execute()
         
@@ -620,7 +621,7 @@ class WebhookService:
             expires_at=expires_at
         )
         
-        next_grant_date = datetime.fromtimestamp(subscription['current_period_end'], tz=timezone.utc)
+        next_grant_date = datetime.fromtimestamp(subscription['items']['data'][0]['current_period_end'], tz=timezone.utc)
         
         await client.from_('credit_accounts').update({
             'tier': new_tier['name'],
